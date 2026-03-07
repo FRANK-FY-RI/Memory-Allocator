@@ -19,7 +19,7 @@ public:
     ~timer()
     {
         auto end = steady_clock::now();
-        long long duration = duration_cast<milliseconds>(end - start).count();
+        long long duration = duration_cast<microseconds>(end - start).count();
         a += duration;
     }
 };
@@ -39,7 +39,7 @@ int main()
     long long time_my_alloc = 0, time_new = 0;
     vector<void *> addrs;
     addrs.reserve(allocations);
-    for (int iter = 0; iter < 2; iter++)
+    for (int iter = 0; iter < 20; iter++)
     {
         // my alloc
         {

@@ -15,7 +15,7 @@
 #define __MEMORY_H
 #include <sys/mman.h>
 #include <unistd.h>
-#include <iostream>
+#include <stdexcept>
 #include <cassert>
 
 template <size_t N>
@@ -37,8 +37,7 @@ public:
     memory_allocator() { 
         heap_base = mmap(NULL, node_size + N, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
         if(heap_base == MAP_FAILED) {
-            std::cerr<<"Unable to allocate a memory pool of size "<<84+node_size<<" bytes\n";
-            throw std::runtime_error("Segmentation Fault");
+            throw std::runtime_error("Segmentation Fault, not enough memory\n");
         }
         head = (free_list_node*)heap_base;
         head->addr = (std::byte*)heap_base + node_size;
@@ -67,6 +66,7 @@ public:
             }
             ptr = ptr->next;
         }
+        if(ret == nullptr) throw std::bad_alloc();
         return ret;
     }
 
@@ -90,10 +90,7 @@ public:
 
     //Destructor
     ~memory_allocator() {
-        if(munmap(heap_base, 84+node_size) == -1) {
-            std::cerr<<"Unable to free the heap of size "<<84+node_size<<" at "<<heap_base<<'\n';
-            exit(1);
-        } 
+        munmap(heap_base, N+node_size);
         head = nullptr;
     }
 

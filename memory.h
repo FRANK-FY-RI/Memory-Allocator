@@ -4,12 +4,12 @@
     First Fit algorithm is used for allocation.
 
     Advantages:
-    1. Very simple to implement
+    1. No Internal Fragmentation.
 
     Disadvantages:
     1. Highly prone to External Fragmentation.
 
-    * Every deallocation tries forward coalesing to prevent external fragmentation.
+    * Every deallocation tries coalesing to prevent external fragmentation.
 */
 
 #ifndef __MEMORY_H
@@ -28,27 +28,47 @@ class memory_allocator {
         free_list_node *next;
         free_list_node *prev;
     };
+
+    //Footer
+    struct footer {
+        size_t left;
+    };
     
     void *heap_base, *heap_end;
     free_list_node *head;
     static constexpr const size_t node_size = sizeof(free_list_node);
+    static constexpr const size_t foot_size = sizeof(footer);
 
     //Node remove
     void node_remove(free_list_node *ptr) {
         free_list_node *prev = ptr->prev, *next = ptr->next;
         if(prev != nullptr) prev->next = next;
+        else head = next;
         if(next != nullptr) next->prev = prev;
     }
 
     //Coalesce forward
     void coalesce(free_list_node *ptr) {
-        while(true) {
-            free_list_node *next_chunk = (free_list_node*)((std::byte*)ptr + node_size + ptr->left);
-            if((void*)next_chunk >= heap_end) break;
-            if(next_chunk->is_free == false) break;
-            size_t new_left = ptr->left + next_chunk->left + node_size;
+        //forward
+        free_list_node *next_chunk = (free_list_node*)((std::byte*)ptr + node_size + ptr->left + foot_size);
+        if((void*)next_chunk<heap_end && next_chunk->is_free) {
+            size_t new_left = ptr->left + next_chunk->left + node_size + foot_size;
             ptr->left = new_left;
+            footer *foot = (footer*)((std::byte*)ptr + node_size + ptr->left);
+            foot->left = ptr->left;
             node_remove(next_chunk);
+        }
+
+        //backward
+        footer *prev_foot = (footer*)((std::byte*)ptr - foot_size);
+        if((void*)prev_foot>=heap_base) {
+            free_list_node *prev_chunk = (free_list_node*)((std::byte*)ptr - foot_size - prev_foot->left - node_size);
+            if((void*)prev_chunk>=heap_base && prev_chunk->is_free) {
+                prev_chunk->left += (ptr->left + node_size + foot_size);
+                footer *foot = (footer*)((std::byte*)prev_chunk + node_size + prev_chunk->left);
+                foot->left = prev_chunk->left;
+                node_remove(ptr);
+            }
         }
     }
 
@@ -56,33 +76,38 @@ public:
 
     //Constructor
     memory_allocator() { 
-        heap_base = mmap(NULL, node_size + N, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+        heap_base = mmap(NULL, node_size + N + foot_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
         if(heap_base == MAP_FAILED) {
             throw std::runtime_error("Segmentation Fault, not enough memory\n");
         }
-        heap_end = (std::byte*)heap_base + node_size + N;
+        heap_end = (std::byte*)heap_base + node_size + N + foot_size;
         head = (free_list_node*)heap_base;
         head->left = N;
         head->next = nullptr;
         head->is_free = true;
         head->prev = nullptr;
+        footer *foot = (footer*)((std::byte*)heap_end - foot_size);
+        foot->left = N;
     }
 
     //Memory Allocator function
     void *allocate(int size) {
         assert(size>0);
-        size_t req = node_size + size;
-        //std::cout<<req<<'\n';
+        size_t req = node_size + size + foot_size;
         void *ret = nullptr;
         free_list_node *ptr = head;
         while(ptr != nullptr) {
             if(ptr->left >= req) {
-                free_list_node *new_addr = (free_list_node*)((std::byte*)ptr + node_size + ptr->left - req);
+                free_list_node *new_addr = (free_list_node*)((std::byte*)ptr + node_size + ptr->left + foot_size - req);
                 ret = (std::byte*)new_addr+node_size;
                 new_addr->left = size;
                 new_addr->is_free = false;
                 new_addr->next = nullptr;
                 ptr->left -= req;
+                footer *old_foot = (footer*)((std::byte*)new_addr - foot_size);
+                old_foot->left = ptr->left;
+                footer *foot = (footer*)((std::byte*)new_addr + node_size + size);
+                foot->left = size; 
                 break;
             }
             ptr = ptr->next;
@@ -114,7 +139,7 @@ public:
 
     //Destructor
     ~memory_allocator() {
-        munmap(heap_base, N+node_size);
+        munmap(heap_base, N+node_size + foot_size);
         head = nullptr;
     }
 

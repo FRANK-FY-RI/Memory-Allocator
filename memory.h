@@ -5,10 +5,11 @@
 
     Advantages:
     1. Very simple to implement
-    2. Fast
 
     Disadvantages:
     1. Highly prone to External Fragmentation.
+
+    * Every deallocation tries forward coalesing to prevent external fragmentation.
 */
 
 #ifndef __MEMORY_H

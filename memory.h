@@ -1,13 +1,13 @@
 /*
     Design:
     This memory allocator manages a fixed heap of size N bytes.
-    First Fit algorithm is used for allocation.
+    Closest Fit algorithm is used for allocation.
 
     Advantages:
     1. No Internal Fragmentation.
 
     Disadvantages:
-    1. Highly prone to External Fragmentation.
+    1. Less prone to External Fragmentation than First Fit, but in practice is generally slower than First Fit.
 
     * Every deallocation tries coalesing to prevent external fragmentation.
 */
@@ -95,23 +95,29 @@ public:
         assert(size>0);
         size_t req = node_size + size + foot_size;
         void *ret = nullptr;
-        free_list_node *ptr = head;
+        free_list_node *ptr = head, *closest = nullptr;
+        size_t diff = N;
         while(ptr != nullptr) {
             if(ptr->left >= req) {
-                free_list_node *new_addr = (free_list_node*)((std::byte*)ptr + node_size + ptr->left + foot_size - req);
-                ret = (std::byte*)new_addr+node_size;
-                new_addr->left = size;
-                new_addr->is_free = false;
-                new_addr->next = nullptr;
-                ptr->left -= req;
-                footer *old_foot = (footer*)((std::byte*)new_addr - foot_size);
-                old_foot->left = ptr->left;
-                footer *foot = (footer*)((std::byte*)new_addr + node_size + size);
-                foot->left = size; 
-                break;
+                if(diff > (ptr->left-req)) {
+                    diff = ptr->left - req;
+                    closest = ptr;
+                } 
             }
             ptr = ptr->next;
         }
+        if(closest == nullptr) return nullptr;
+        ptr = closest;
+        free_list_node *new_addr = (free_list_node*)((std::byte*)ptr + node_size + ptr->left + foot_size - req);
+        ret = (std::byte*)new_addr+node_size;
+        new_addr->left = size;
+        new_addr->is_free = false;
+        new_addr->next = nullptr;
+        ptr->left -= req;
+        footer *old_foot = (footer*)((std::byte*)new_addr - foot_size);
+        old_foot->left = ptr->left;
+        footer *foot = (footer*)((std::byte*)new_addr + node_size + size);
+        foot->left = size; 
         return ret;
     }
 

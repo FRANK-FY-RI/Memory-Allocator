@@ -55,6 +55,8 @@ int main() {
 
 Benchmark comparing with `new`:
 
+Note: The benchmark result is produced using -O3 compiler flag
+
 * First Fit without Coalescing:
 Note: This benchmark ran for only 2 iterations unlike the rest of all which ran 20 times becuase it was too slow.
 ```bash

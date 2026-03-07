@@ -26,6 +26,7 @@ class memory_allocator {
         size_t left;
         bool is_free;
         free_list_node *next;
+        free_list_node *prev;
     };
     
     void *heap_base, *heap_end;
@@ -34,19 +35,9 @@ class memory_allocator {
 
     //Node remove
     void node_remove(free_list_node *ptr) {
-        if(ptr == head) {
-            head = head->next;
-            ptr->next = nullptr;
-            return;
-        }
-        free_list_node *temp = head;
-        free_list_node *prev = nullptr;
-        while(temp != ptr) {
-            prev = temp;
-            temp = temp->next;
-        }
-        prev->next = temp->next;
-        ptr->next = nullptr;
+        free_list_node *prev = ptr->prev, *next = ptr->next;
+        if(prev != nullptr) prev->next = next;
+        if(next != nullptr) next->prev = prev;
     }
 
     //Coalesce forward
@@ -74,6 +65,7 @@ public:
         head->left = N;
         head->next = nullptr;
         head->is_free = true;
+        head->prev = nullptr;
     }
 
     //Memory Allocator function
@@ -103,6 +95,8 @@ public:
         assert(ptr != nullptr);
         free_list_node *curr_chunk = (free_list_node*)((std::byte*)ptr-node_size);
         curr_chunk->next = head;
+        head->prev = curr_chunk;
+        curr_chunk->prev = nullptr;
         curr_chunk->is_free = true;
         head = curr_chunk;
         coalesce(curr_chunk);

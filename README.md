@@ -16,22 +16,10 @@ This project was built as a low-level systems programming exercise to explore ho
 * Boundary tags for `O(1)` block merging
 * Benchmark comparison against new
 
-## Design Overview
+## Memory Allocator Architecture
 
-The allocator manages a contiguous block of memory of size `N`.
-Memory is divided into chunks containing metadata and usable memory.
+[![Allocator Design](allocator_flow.png)](allocator_flow.png)
 
-```bash
-+--------------+---------------+--------------+
-| block header | usable memory | block footer |
-+--------------+---------------+--------------+
-  (contents):-                    (contents):-
- size of chunk                   size of chunk
- bool  is it free
- pointer to next
- pointer to prev
-
-```
 Free chunks are stored in a doubly linked free list.
 
 ## Usage

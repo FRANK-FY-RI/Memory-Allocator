@@ -153,8 +153,24 @@ public:
     memory_allocator(const memory_allocator&)=delete;
     memory_allocator& operator=(const memory_allocator&)=delete;
     //Move constructor and move assignment operator
-    memory_allocator(memory_allocator&&)=delete;
-    memory_allocator& operator=(memory_allocator&&)=delete;
+    memory_allocator(memory_allocator&& rhs) 
+    : heap_base(rhs.heap_base),
+      heap_end(rhs.heap_end),
+      head(rhs.head) { 
+        rhs.heap_base = rhs.heap_end = rhs.head = nullptr; 
+    }
+    memory_allocator& operator=(memory_allocator&& rhs) {
+        if(&rhs != this) {
+            if(heap_base) {
+                munmap(heap_base, N + node_size + foot_size);
+            }
+            heap_base = rhs.heap_base;
+            heap_end = rhs.heap_end;
+            head = rhs.head; 
+            rhs.heap_base = rhs.heap_end = rhs.head = nullptr; 
+        } 
+        return *this;
+    }
 };
 
 #endif

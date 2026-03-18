@@ -145,8 +145,10 @@ public:
 
     //Destructor
     ~memory_allocator() {
-        munmap(heap_base, N+node_size + foot_size);
-        head = nullptr;
+        if(heap_base) {
+            munmap(heap_base, N+node_size + foot_size);
+            head = nullptr;
+        } 
     }
 
     //Copy constructor and copy assignment operator
@@ -159,7 +161,7 @@ public:
       head(rhs.head) { 
         rhs.heap_base = rhs.heap_end = rhs.head = nullptr; 
     }
-    memory_allocator& operator=(memory_allocator&& rhs) {
+    memory_allocator& operator=(memory_allocator&& rhs) noexcept {
         if(&rhs != this) {
             if(heap_base) {
                 munmap(heap_base, N + node_size + foot_size);

@@ -155,7 +155,7 @@ public:
     memory_allocator(const memory_allocator&)=delete;
     memory_allocator& operator=(const memory_allocator&)=delete;
     //Move constructor and move assignment operator
-    memory_allocator(memory_allocator&& rhs) 
+    memory_allocator(memory_allocator&& rhs) noexcept
     : heap_base(rhs.heap_base),
       heap_end(rhs.heap_end),
       head(rhs.head) { 

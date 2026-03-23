@@ -106,7 +106,7 @@ public:
             }
             ptr = ptr->next;
         }
-        if(closest == nullptr) return nullptr;
+        if(closest == nullptr) throw std::bad_alloc();
         ptr = closest;
         free_list_node *new_addr = (free_list_node*)((std::byte*)ptr + node_size + ptr->left + foot_size - req);
         ret = (std::byte*)new_addr+node_size;

@@ -18,7 +18,7 @@ This project was built as a low-level systems programming exercise to explore ho
 
 ## Memory Allocator Architecture
 
-[![Allocator Design](allocator_flow.png)](allocator_flow.png)
+[![Allocator Design](benchmark/allocator_flow.png)](benchmark/allocator_flow.png)
 
 Free chunks are stored in a doubly linked free list.
 

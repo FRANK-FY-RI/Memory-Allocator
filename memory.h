@@ -36,8 +36,8 @@ class memory_allocator {
     
     void *heap_base, *heap_end;
     free_list_node *head;
-    static constexpr const size_t node_size = sizeof(free_list_node);
-    static constexpr const size_t foot_size = sizeof(footer);
+    static constexpr size_t node_size = sizeof(free_list_node);
+    static constexpr size_t foot_size = sizeof(footer);
 
     //Node remove
     void node_remove(free_list_node *ptr) {

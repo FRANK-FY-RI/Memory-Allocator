@@ -157,7 +157,7 @@ void benchmark() {
         Vec v(P);
         std::iota(v.begin(), v.end(), 0);
         timer *t = new timer("range erase stress test");
-        for(int i = 0; i<100; i++) {
+        for(int i = 0; i<(P/M); i++) {
             v.erase(v.begin(), v.begin()+M);
         }
         delete t;

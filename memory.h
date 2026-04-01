@@ -91,9 +91,11 @@ public:
     }
 
     //Memory Allocator function
-    void *allocate(int size) {
+    void *allocate(size_t size) {
         assert(size>0);
         size_t req = node_size + size + foot_size;
+        req = (req+15)&(~15);
+        size = req - node_size - foot_size;
         void *ret = nullptr;
         free_list_node *ptr = head, *closest = nullptr;
         size_t diff = N;

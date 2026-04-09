@@ -1,4 +1,4 @@
-# Custom Memory Pool Allocator (C++)
+# Arena allocator with free-list management
 
 A lightweight fixed-size memory pool allocator implemented in C++.
 The allocator uses a free list with boundary tags to manage memory efficiently inside a preallocated heap.
